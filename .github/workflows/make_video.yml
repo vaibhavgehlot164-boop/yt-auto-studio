@@ -1,0 +1,60 @@
+name: Make YouTube Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Video topic"
+        required: true
+      style:
+        description: "Style"
+        default: "Facts / Education"
+      lang:
+        description: "Language"
+        type: choice
+        options: [hinglish, hindi, english]
+        default: hinglish
+      format:
+        description: "Format"
+        type: choice
+        options: [short, long]
+        default: short
+      upload:
+        description: "Upload to YouTube (private)"
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: System packages
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto-core libraqm0
+      - run: pip install -r requirements.txt
+      - name: Generate video
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          TOPIC: ${{ inputs.topic }}
+          STYLE: ${{ inputs.style }}
+          LANGUAGE: ${{ inputs.lang }}
+          FORMAT: ${{ inputs.format }}
+          UPLOAD_FLAG: ${{ inputs.upload && '--upload' || '' }}
+        run: python main.py "$TOPIC" --style "$STYLE" --lang "$LANGUAGE" --format "$FORMAT" $UPLOAD_FLAG
+      - uses: actions/upload-artifact@v4
+        with:
+          name: video-output
+          path: |
+            output/**/video.mp4
+            output/**/thumbnail.jpg
+            output/**/metadata.json
+            output/**/script.txt
+          retention-days: 7
