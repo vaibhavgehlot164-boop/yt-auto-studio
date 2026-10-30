@@ -1,0 +1,9 @@
+requests
+edge-tts
+Pillow
+numpy<2
+moviepy==1.0.3
+imageio-ffmpeg
+google-api-python-client
+google-auth
+google-auth-oauthlib
